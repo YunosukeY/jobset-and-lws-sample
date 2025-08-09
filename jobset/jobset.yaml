@@ -4,7 +4,19 @@ metadata:
   name: jobset-sample
 spec:
   replicatedJobs:
+    - name: leaders
+      replicas: 1
+      template:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: leader
+                image: busybox
+                command: ["/bin/sh"]
+                args: ["-c", "echo 'start'; sleep 10; echo 'end'"]
     - name: workers
+      replicas: 2
       template:
         spec:
           template:
@@ -14,3 +26,6 @@ spec:
                 image: busybox
                 command: ["/bin/sh"]
                 args: ["-c", "echo 'start'; sleep 10; echo 'end'"]
+      dependsOn:
+      - name: leaders
+        status: Complete
