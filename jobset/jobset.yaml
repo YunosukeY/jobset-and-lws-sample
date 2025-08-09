@@ -2,23 +2,17 @@ apiVersion: jobset.x-k8s.io/v1alpha2
 kind: JobSet
 metadata:
   name: jobset-sample
+  annotations:
+    alpha.jobset.sigs.k8s.io/exclusive-topology: rack
 spec:
   replicatedJobs:
     - name: workers
-      replicas: 1
+      replicas: 2
       template:
         spec:
           backoffLimit: 0
-          podFailurePolicy:
-            rules:
-            - action: FailJob
-              onExitCodes:
-                containerName: worker
-                operator: In
-                values: [10]
           template:
             spec:
-              restartPolicy: Never
               containers:
               - name: worker
                 image: busybox
@@ -28,29 +22,4 @@ spec:
                   - |
                     echo 'start'
                     sleep 10
-                    # 0-2の乱数を生成（3で割った余りで1/3の確率を作る）
-                    outcome=$((RANDOM % 3))
-                    case $outcome in
-                      0)
-                        echo 'success'
-                        exit 0
-                        ;;
-                      1)
-                        echo 'failed with exit code 1'
-                        exit 1
-                        ;;
-                      2)
-                        echo 'failed with exit code 10'
-                        exit 10
-                        ;;
-                    esac
-  failurePolicy:
-    maxRestarts: 3
-    restartStrategy: Recreate
-    rules:
-    - name: FailOnPodFailurePolicy
-      action: FailJobSet
-      onJobFailureReasons:
-      - PodFailurePolicy
-      targetReplicatedJobs:
-      - workers
+                    echo 'end'
