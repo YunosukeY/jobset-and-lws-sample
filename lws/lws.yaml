@@ -12,12 +12,16 @@ spec:
         - name: leader
           image: busybox
           command: ["sh"]
-          args: ["-c", "sleep infinity"]
-
+          args: ["-c", "echo start && sleep infinity"]
     workerTemplate:
       spec:
         containers:
         - name: worker
           image: busybox
           command: ["sh"]
-          args: ["-c", "sleep infinity"]
+          args: ["-c", "echo start && sleep infinity"]
+  rolloutStrategy:
+    type: RollingUpdate
+    rollingUpdateConfiguration:
+      maxUnavailable: 1
+      maxSurge: 1
