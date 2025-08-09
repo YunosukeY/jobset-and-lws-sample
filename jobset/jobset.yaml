@@ -4,24 +4,21 @@ metadata:
   name: jobset-sample
 spec:
   replicatedJobs:
-    - name: leaders
+    - name: workers
       replicas: 1
       template:
         spec:
-          template:
-            spec:
-              containers:
-              - name: leader
-                image: busybox
-                command: ["/bin/sh"]
-                args: ["-c", "echo 'start'; sleep 10; echo 'end'"]
-    - name: workers
-      replicas: 2
-      template:
-        spec:
           backoffLimit: 0
+          podFailurePolicy:
+            rules:
+            - action: FailJob
+              onExitCodes:
+                containerName: worker
+                operator: In
+                values: [10]
           template:
             spec:
+              restartPolicy: Never
               containers:
               - name: worker
                 image: busybox
@@ -31,16 +28,29 @@ spec:
                   - |
                     echo 'start'
                     sleep 10
-                    if [ $((RANDOM % 2)) -eq 0 ]; then
-                      echo 'failed'
-                      exit 1
-                    else
-                      echo 'success'
-                    fi
-      dependsOn:
-      - name: leaders
-        status: Ready
-  successPolicy:
-    operator: All
-    targetReplicatedJobs:
+                    # 0-2の乱数を生成（3で割った余りで1/3の確率を作る）
+                    outcome=$((RANDOM % 3))
+                    case $outcome in
+                      0)
+                        echo 'success'
+                        exit 0
+                        ;;
+                      1)
+                        echo 'failed with exit code 1'
+                        exit 1
+                        ;;
+                      2)
+                        echo 'failed with exit code 10'
+                        exit 10
+                        ;;
+                    esac
+  failurePolicy:
+    maxRestarts: 3
+    restartStrategy: Recreate
+    rules:
+    - name: FailOnPodFailurePolicy
+      action: FailJobSet
+      onJobFailureReasons:
+      - PodFailurePolicy
+      targetReplicatedJobs:
       - workers
