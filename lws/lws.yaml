@@ -6,6 +6,14 @@ spec:
   replicas: 3
   leaderWorkerTemplate:
     size: 4
+    leaderTemplate:
+      spec:
+        containers:
+        - name: leader
+          image: busybox
+          command: ["sh"]
+          args: ["-c", "sleep infinity"]
+
     workerTemplate:
       spec:
         containers:
