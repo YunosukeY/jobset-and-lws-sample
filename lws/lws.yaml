@@ -1,0 +1,15 @@
+apiVersion: leaderworkerset.x-k8s.io/v1
+kind: LeaderWorkerSet
+metadata:
+  name: lws-sample
+spec:
+  replicas: 3
+  leaderWorkerTemplate:
+    size: 4
+    workerTemplate:
+      spec:
+        containers:
+        - name: worker
+          image: busybox
+          command: ["sh"]
+          args: ["-c", "sleep infinity"]
